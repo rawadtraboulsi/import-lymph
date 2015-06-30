@@ -1,0 +1,450 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <title>Lymph Talk by mamachanko</title>
+
+    <link rel="stylesheet" href="stylesheets/styles.css">
+    <link rel="stylesheet" href="stylesheets/github-light.css">
+    <script src="javascripts/scale.fix.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+    <!--[if lt IE 9]>
+    <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+  </head>
+  <body>
+    <div class="wrapper">
+      <header>
+        <h1 class="header">Lymph Talk</h1>
+        <p class="header">An introduction talk about http://lymph.io</p>
+
+        <ul>
+          <li class="download"><a class="buttons" href="https://github.com/mamachanko/lymph-talk/zipball/master">Download ZIP</a></li>
+          <li class="download"><a class="buttons" href="https://github.com/mamachanko/lymph-talk/tarball/master">Download TAR</a></li>
+          <li><a class="buttons github" href="https://github.com/mamachanko/lymph-talk">View On GitHub</a></li>
+        </ul>
+
+        <p class="header">This project is maintained by <a class="header name" href="https://github.com/mamachanko">mamachanko</a></p>
+
+
+      </header>
+      <section>
+        <h1>
+<a id="stop-trying-to-glue-your-services-together-import-lymph" class="anchor" href="#stop-trying-to-glue-your-services-together-import-lymph" aria-hidden="true"><span class="octicon octicon-link"></span></a>Stop trying to glue your services together<code>; import lymph</code>
+</h1>
+
+<p>Welcome to the materials and the transcript of our talk about lymph.</p>
+
+<h2>
+<a id="demo-setup" class="anchor" href="#demo-setup" aria-hidden="true"><span class="octicon octicon-link"></span></a>Demo setup</h2>
+
+<p>It is suggest to use the provided <a href="vagrantup.com">vagrant</a> box. It is set up
+with all tooling and code ready for your perusal. It has both zookeeper and
+rabbitmq running inside. To get it up and running execute:</p>
+
+<div class="highlight highlight-shell"><pre>vagrant up <span class="pl-k">&amp;&amp;</span> vagrant ssh</pre></div>
+
+<p>You will be prompted for the root password half-way through <code>vagrant up</code>
+because we use NFS to share files.</p>
+
+<p>Once inside, the <code>motd</code> contains all information you need to get going.</p>
+
+<h2>
+<a id="the-talk" class="anchor" href="#the-talk" aria-hidden="true"><span class="octicon octicon-link"></span></a>The talk</h2>
+
+<blockquote>
+<p>An introduction talk about lymph by Alejandro Castillo &amp; Max Brauer</p>
+</blockquote>
+
+<p>(This is a transcript. So it might read odd here and there.)</p>
+
+<h3>
+<a id="opening" class="anchor" href="#opening" aria-hidden="true"><span class="octicon octicon-link"></span></a>Opening</h3>
+
+<p>Hello and good afternoon. Hopefully you've had a nice lunch. My name is
+&lt;name&gt; and I'd like to introduce you to <em>lymph</em>, a framework for writing
+services in Python. With lymph you can write services with almost no
+boilerplate. But let me introduce us first.</p>
+
+<p>We're Delivery Hero, a holding of online food ordering services world-wide.
+We're located in Berlin. We operate in 34 countries and growing.</p>
+
+<p>Let me explain the concept of online food ordering to those who're unfamiliar
+with it. However, I doubt there arent any ;) The concept is simple:</p>
+
+<ul>
+<li>get hungry</li>
+<li>go online</li>
+<li>search for restaurants close to you</li>
+<li>compile your order</li>
+<li>pay online</li>
+<li>wait for the delivery
+Basically, it's e-commerce with very grumpy customers. But the restaurant
+integration, e.g. order transmission, fulfillment, delivery, etc. offer quite
+an ecosystem of things to tackle.</li>
+</ul>
+
+<p>Let's briefly go over the flow of our talk:</p>
+
+<ul>
+<li>We're going to explain where we're coming from and why we have given birth
+to another framework</li>
+<li>We'll look at code as fast possible</li>
+<li>We'll run services and increasingly add new services to explore communication
+patterns and characteristics of lymph</li>
+<li>We'll give you a brief rundown of lymph's internal</li>
+<li>We'll go over how lymph is different from nameko</li>
+<li>We'll talk future plans</li>
+</ul>
+
+<p>For the sake of this talk we assume that you're familiar with the concept of
+services. We assume that you are familiar with what a monolith is. We assume
+that you are familiar with when and why to use either and even more so when
+not. We will not discuss the differences between monoliths and services. We
+won't talk about how services might safe your development or your business.
+Neither will talk about sophisticated networking topologies on how to plug
+services together.</p>
+
+<p>But what we're going to talk about is lymph. By the end of the talk you should
+understand what lymph can and cannot do and why that's cool.</p>
+
+<p>You can find all sources and this talk written down online. I'll share it with
+you afterwards, otherwise my appearance here is pointless ^^</p>
+
+<p>If you're Spanish speaker you may also want to attend this very talk in Spanish
+later this weak by Castillo.</p>
+
+<p>If you happen to attend the PyCon France, we'll meet there too.</p>
+
+<p>You can find us in the foyer. Talk to us :) We've brought goodies and gummi
+bears.</p>
+
+<p>(repeat all this in the end)</p>
+
+<h3>
+<a id="motivation" class="anchor" href="#motivation" aria-hidden="true"><span class="octicon octicon-link"></span></a>Motivation</h3>
+
+<p>Our starting point was the classic situation. We had a massive Django monolith.
+We weren't moving fast at all. We've had trouble finding rhythm for a growing
+number of teams and developers. People we're blocked by other people. You
+should think textbook "my monolith hurts, i want services". So, the perks of a
+more service-oriented became increasingly attractive and reasonable to us. This
+was even more so in the light of a global platform to unite our very
+heterogenic Product landscape. #modularity</p>
+
+<p>So, the first thing some of you would be thinking is 'why write another
+framework?'. The answer was that when we looked around we did not find
+anything that would fit our needs. We wanted to work with services but we
+wanted some very specific things(<a href="https://github.com/TODO" class="user-mention">@TODO</a> what are these?). We are mainly
+Python-powered so we wanted to stay inside Python as much as possible. We
+wanted to abstract away all the problems one is dealing with when doind
+services, i.e. transport data, register services, discover them etc. We wanted
+to enable our developers to work with services in a simple and easy way: no
+boilerplate, no excessive details that don't relate to bussiness logic.</p>
+
+<p><a href="https://github.com/TODO" class="user-mention">@TODO</a>: prepare other alternatives and related technologies and possible go over
+them (jsonrpc, zerorpc, chaussette, cocaine, ...)</p>
+
+<p>By the way, how many of you have attended the nice talk about
+<a href="https://github.com/onefinestay/nameko">nameko</a>?</p>
+
+<p>Yes, some of you will be thinking after their nice talk 'use Nameko'. But that
+was not in the current state when we started. It also does not cover all the
+things we wanted to get from a framework. Nevermind though, we'll briefly go
+over the differences of the two later.</p>
+
+<p>So, say hello to [lymph][lymph.io]. By now, hopefully, you're itching to
+see how a service looks in lymph. Spoiler alert: very much like in nameko.</p>
+
+<p>We'll break the ice by demoing running and playing around with services. We'll
+slowly progress through lymph's features, service by service.</p>
+
+<h3>
+<a id="demo" class="anchor" href="#demo" aria-hidden="true"><span class="octicon octicon-link"></span></a>Demo</h3>
+
+<h4>
+<a id="the-echo-service" class="anchor" href="#the-echo-service" aria-hidden="true"><span class="octicon octicon-link"></span></a>The Echo service</h4>
+
+<p>[show Echo service code]</p>
+
+<p>Et voila. This is what a simple echo service looks like in lymph. Its interface
+is one RPC method called <code>echo</code> which takes text, prints it, emits an
+event(containing the text in the body) and returns the text.</p>
+
+<p>All we need to do to make things happen is to inherit from <code>lymph.Interface</code>
+and decorate RPC methods with <code>@lymph.rpc()</code>. Lastly, we've got the interface's
+<code>emit()</code> function to our disposal which dispatches events in the event system.</p>
+
+<p>Let's jump on the shell and play with it.</p>
+
+<div class="highlight highlight-shell"><pre>mux start <span class="pl-c1">echo</span></pre></div>
+
+<p>What you see here is a tmux session with two panes. On the right-hand side you
+see the echo service being run with lymph's <code>instance</code> command. On the
+left-hand side you see a plain shell on which we'll explore lymph's tooling.</p>
+
+<p>One of the first things we considered when building lymph was the tooling. We
+think we managed to get some very nice tooling built around it to make
+development of services easier.</p>
+
+<p>So what tooling is available? <code>lymph list</code> will tell us.</p>
+
+<div class="highlight highlight-shell"><pre>lymph list</pre></div>
+
+<p>You see there's plenty of commands available to interact with services.</p>
+
+<p>To begin with let's assert that an instance of the echo service is running.
+We'll use lymph's <code>discover</code> command.</p>
+
+<div class="highlight highlight-shell"><pre>lymph discover</pre></div>
+
+<p>As you can see, one instance is running indeed (<code>Echo [1]</code>).</p>
+
+<p>Let's excercise the echo service's <code>echo</code> method. We'll use lymph's <code>request</code>
+command. Therefore, we have to provide the service name, the name of the method
+and the body of the request as JSON. What we expect to see is the echo service
+to return the text as is, but it should also print it and emit an event.</p>
+
+<div class="highlight highlight-shell"><pre>lymph request Echo.<span class="pl-c1">echo</span> <span class="pl-s"><span class="pl-pds">'</span>{"text": "Good afternoon, EuroPython!"}<span class="pl-pds">'</span></span></pre></div>
+
+<p>The result of the RPC is as expected and the service printed the text.</p>
+
+<p>This is boring and our service must be pretty lonely. Nobody listens to its
+events. Here comes the ear.</p>
+
+<h4>
+<a id="the-ear-service" class="anchor" href="#the-ear-service" aria-hidden="true"><span class="octicon octicon-link"></span></a>The Ear service</h4>
+
+<p>[show Ear service code]</p>
+
+<p>The ear listens to echo's events. Pardon the pun. Again, it's a lymph
+service(we inherit from <code>lymph.Interface</code>). However, there's nothing but one
+method which is subscribed to <code>echo</code> events. It simply prints the text contained
+in the event's body. That means, everytime an event of this type occurs
+exactly once instance of ear will consume it.</p>
+
+<p>Let's excercise our services combination. This time round, though, we'll run
+two instances of the echo service and one instance of the ear service.</p>
+
+<div class="highlight highlight-shell"><pre>mux start <span class="pl-c1">echo</span>-ear</pre></div>
+
+<p>Again, we see a tmux session. On the right you find two instances of the echo
+service followed by an instance of the ear service.</p>
+
+<p>We should find them registered correctly.</p>
+
+<div class="highlight highlight-shell"><pre>lymph discover</pre></div>
+
+<p>And, indeed, they list correctly.</p>
+
+<p>Let's emit an echo event in the event system to assert whether the ear service
+listens to it. We'll use lymph's <code>emit</code> command. We're expecting the ear to
+print the text field from the event body.</p>
+
+<pre><code>lymph emit echo '{"text": "hi"}'
+</code></pre>
+
+<p>Nice. That worked.</p>
+
+<p>When we do RPCs now we expect the echo instances to respond in round-robin
+fashion. Furthermore, the ear instance should print all consumed events.</p>
+
+<div class="highlight highlight-shell"><pre>lymph request Echo.<span class="pl-c1">echo</span> <span class="pl-s"><span class="pl-pds">'</span>{"text": "Good afternoon, EuroPython!"}<span class="pl-pds">'</span></span></pre></div>
+
+<p>(repeatedly, until both echo instances have responded)</p>
+
+<p>As you see, our expectations are met.</p>
+
+<p>If we were to run several instances of the ear services, each event would be
+consumed by exactly once instance. However, lymph allows to broadcast events.</p>
+
+<p>Finally, since it's 2015, no talk would be complete without talking about HTTP.
+Let's add a web service to the mix. Let's say we wanted to expose the echo
+functionality via an HTTP API. Lymph has a class for that.</p>
+
+<h4>
+<a id="the-web-service" class="anchor" href="#the-web-service" aria-hidden="true"><span class="octicon octicon-link"></span></a>The Web service</h4>
+
+<p>[show Web service code]</p>
+
+<p>This is the Web service. It subclasses lymph's <code>WebServiceInterface</code>. In this
+case we're not exposing RPC methods, emitting not listening to events. However,
+we configure a Werkzeug URL map as a class attribute. We've added one endpoint:
+<code>/echo</code> and a handler for it. The handler receives a Werkzeug reuqest object.</p>
+
+<p>The echo handler unpacks the body of the request. It calls the echo service
+via the <code>self.proxy</code> and returns the result in the response. And it prints.</p>
+
+<p>Mind, that we're not validating the request method nor anything else.</p>
+
+<p>Run it or it didn't happen. We'll bring up an instance of each of services now.</p>
+
+<div class="highlight highlight-shell"><pre>mux start all</pre></div>
+
+<p>On the right you can see an instance of every service, Web, Echo and Ear.</p>
+
+<p>Once again, they should have registered correctly:</p>
+
+<div class="highlight highlight-shell"><pre>lymph discover</pre></div>
+
+<p>Let's hit our web service and see how the request ripples through our service
+cluster. We should see all service print something. The web service is
+listening at the default port 4080. We're using <code>httpie</code> to excercise the
+request:</p>
+
+<pre><code>http localhost:4080/echo text=hi
+</code></pre>
+
+<p>The response looks good and all services have performed accordingly.</p>
+
+<h4>
+<a id="lymphs-development-server" class="anchor" href="#lymphs-development-server" aria-hidden="true"><span class="octicon octicon-link"></span></a>Lymph's development server</h4>
+
+<p>Yet, when developing locally you seldomly would want to run all of your
+services within different shell or tmux panes. Lymph has its own development
+server which wraps around any number of services with any number of instances
+each. Therefore, we'll have to configure which services to run and how many
+instances of each in the <code>.lymph.yml</code>:</p>
+
+<div class="highlight highlight-yaml"><pre><span class="pl-s"><span class="pl-ent">instances:</span></span>
+    <span class="pl-s"><span class="pl-ent">Web:</span></span>
+        <span class="pl-s"><span class="pl-ent">command:</span> <span class="pl-s">lymph instance --config=conf/web.yml</span></span>
+
+    <span class="pl-s"><span class="pl-ent">Echo:</span></span>
+        <span class="pl-s"><span class="pl-ent">command:</span> <span class="pl-s">lymph instance --config=conf/echo.yml</span></span>
+        <span class="pl-c1"><span class="pl-ent">numprocesses:</span> 3</span>
+
+    <span class="pl-s"><span class="pl-ent">Ear:</span></span>
+        <span class="pl-s"><span class="pl-ent">command:</span> <span class="pl-s">lymph instance --config=conf/ear.yml</span></span>
+        <span class="pl-c1"><span class="pl-ent">numprocesses:</span> 2</span></pre></div>
+
+<p>Mind that in our case <code>command</code> specifies lymph instances but this could also
+be any other service you need, e.g. Redis.</p>
+
+<p>Let's run it.</p>
+
+<div class="highlight highlight-shell"><pre>mux start all</pre></div>
+
+<p>Once more, we find ourselves inside a tmux session with lymph node running in
+the top-right pane. Below that you see lymph tail running which allows us to
+follow the logs of any number of services. But first, let's check how many instances
+are running:</p>
+
+<div class="highlight highlight-shell"><pre>lymph discover</pre></div>
+
+<p>That's a good number. Once we feed a request into the cluster we should see print
+statements and logs appearing.</p>
+
+<div class="highlight highlight-shell"><pre>http localhost:4080/echo text=hi</pre></div>
+
+<p>But there's a lot going on. You would find an even bigger mess the more
+services and instances you run and the more intricated your patterns of
+communication become. Sometimes you wonder "where did my request go?". Lymph
+helps you though with <code>trace\_id</code>s. Every request that appears in our cluster
+which doesn't have a trace_id assigned gets one. These trace_ids get fowarded
+via every RPC and event.</p>
+
+<p>So we should be able to corellate all actions in cluster to the one incoming
+HTTP request.</p>
+
+<p>[use iterms highlighting: Ctrl+f and type 'trace_id']</p>
+
+<p>And indeed we see the same trace_id across our service instances.</p>
+
+<p>And that mostly covers the tooling we have for lymph services. Let's talk about
+lymph's stack next.</p>
+
+<h4>
+<a id="things-we-havent-touched" class="anchor" href="#things-we-havent-touched" aria-hidden="true"><span class="octicon octicon-link"></span></a>Things we haven't touched</h4>
+
+<ul>
+<li>lymph subscribe</li>
+<li>lymph shell</li>
+<li>config API</li>
+<li>on_start</li>
+<li>metrics</li>
+<li>plugins (new relic, sentry, lymph-top)</li>
+</ul>
+
+<h3>
+<a id="lymph-under-the-hood" class="anchor" href="#lymph-under-the-hood" aria-hidden="true"><span class="octicon octicon-link"></span></a>Lymph under the hood</h3>
+
+<p>How does lymph do things under the hood?</p>
+
+<ul>
+<li>greenlets</li>
+<li>rpc via 0mq</li>
+<li>events via rabbitmq (pluggable)</li>
+<li>registry via zk (pluggable)</li>
+<li>http with werkzeug</li>
+<li>testing</li>
+</ul>
+
+<h3>
+<a id="lymph-compared-to-nameko" class="anchor" href="#lymph-compared-to-nameko" aria-hidden="true"><span class="octicon octicon-link"></span></a>Lymph compared to Nameko</h3>
+
+<ul>
+<li>(<a href="http://lucumr.pocoo.org/2015/4/8/microservices-with-nameko/">http://lucumr.pocoo.org/2015/4/8/microservices-with-nameko/</a>)</li>
+<li>tech</li>
+<li>running</li>
+<li>testing</li>
+<li>only rabbitmq, no zk</li>
+</ul>
+
+<h3>
+<a id="future" class="anchor" href="#future" aria-hidden="true"><span class="octicon octicon-link"></span></a>Future</h3>
+
+<ul>
+<li>eco system (storage, storeproxy, flow etc)</li>
+<li>distconfig</li>
+</ul>
+
+<h3>
+<a id="summary--outro" class="anchor" href="#summary--outro" aria-hidden="true"><span class="octicon octicon-link"></span></a>Summary &amp; outro</h3>
+
+<ul>
+<li>did we accomplish? circle back to claim and title</li>
+<li>lymph.io</li>
+<li>we accept PRs</li>
+<li>we're hiring</li>
+<li>same talk in Spanish</li>
+<li>PyCon Fr</li>
+</ul>
+
+<h3>
+<a id="qa" class="anchor" href="#qa" aria-hidden="true"><span class="octicon octicon-link"></span></a>Q&amp;A</h3>
+
+<ul>
+<li>why zookeeper for registry?</li>
+<li>how to scale up web services? (sharing sockets)</li>
+</ul>
+
+<h3>
+<a id="nice-to-have" class="anchor" href="#nice-to-have" aria-hidden="true"><span class="octicon octicon-link"></span></a>Nice to have</h3>
+
+<ul>
+<li>plugins (lymph-top, newrelic, sentry)</li>
+<li>monitoring</li>
+<li>serial events &amp; broadcast(websockets)</li>
+<li>sieve of Erathostenes (Mislav)</li>
+</ul>
+      </section>
+      <footer>
+        <p><small>Hosted on <a href="https://pages.github.com">GitHub Pages</a> using the Dinky theme</small></p>
+      </footer>
+    </div>
+    <!--[if !IE]><script>fixScale(document);</script><![endif]-->
+		          <script type="text/javascript">
+            var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
+            document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
+          </script>
+          <script type="text/javascript">
+            try {
+              var pageTracker = _gat._getTracker("UA-64656787-1");
+            pageTracker._trackPageview();
+            } catch(err) {}
+          </script>
+
+  </body>
+</html>
